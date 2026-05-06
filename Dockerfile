@@ -28,6 +28,7 @@ FROM base AS vendor
 COPY composer.json composer.lock ./
 RUN composer install \
     --no-dev \
+    --no-scripts \
     --no-interaction \
     --prefer-dist \
     --optimize-autoloader
@@ -49,6 +50,7 @@ COPY . .
 COPY --from=assets /app/public/build ./public/build
 
 RUN mkdir -p storage bootstrap/cache \
+    && php artisan package:discover --ansi \
     && chown -R www-data:www-data storage bootstrap/cache
 
 USER www-data
