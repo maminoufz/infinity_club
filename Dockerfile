@@ -49,9 +49,16 @@ COPY --from=vendor /var/www/html/vendor ./vendor
 COPY . .
 COPY --from=assets /app/public/build ./public/build
 
-RUN mkdir -p storage bootstrap/cache \
-    && php artisan package:discover --ansi \
-    && chown -R www-data:www-data storage bootstrap/cache
+RUN mkdir -p \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap \
+    && chmod -R 755 storage bootstrap
+
+RUN php artisan package:discover --ansi
 
 USER www-data
 
