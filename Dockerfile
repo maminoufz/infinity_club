@@ -1,4 +1,4 @@
-FROM php:8.3-cli-bullseye AS base
+FROM php:8.2-cli-bullseye AS base
 
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
     APP_ENV=production \
