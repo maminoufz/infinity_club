@@ -17,10 +17,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('phone');
+           $table->string('phone')->nullable();
             $table->enum('role', ['visiteur', 'admin'])->default('visiteur');
             $table->text('bio')->nullable();
-            $table->unsignedBigInteger('id_sp'); // Foreign key for specialization (optional)
+           $table->unsignedBigInteger('id_sp')->nullable(); // Foreign key for specialization (optional)
             $table->rememberToken();
             $table->foreignId('current_team_id')->nullable();
             $table->string('profile_photo_path', 2048)->nullable();
