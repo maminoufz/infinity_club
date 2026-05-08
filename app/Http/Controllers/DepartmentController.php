@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -55,6 +54,16 @@ class DepartmentController extends Controller
     // Update an existing department
     public function update(Request $request, $id)
     {
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['error' => 'You do not have the necessary permissions to update a department.'], 403);
+        }
+
         $department = Department::find($id);
 
         if (!$department) {
@@ -78,6 +87,16 @@ class DepartmentController extends Controller
     // Delete a department
     public function destroy($id)
     {
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['error' => 'You do not have the necessary permissions to delete a department.'], 403);
+        }
+
         $department = Department::find($id);
 
         if (!$department) {

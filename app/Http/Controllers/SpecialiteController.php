@@ -66,8 +66,12 @@ class SpecialiteController extends Controller
             return response()->json(['error' => 'Specialite not found'], 404);
         }
 
-        // Check if the user is authenticated and has the 'admin' role
-        $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
         if (!$user || $user->role !== 'admin') {
             return response()->json(['error' => 'You do not have the necessary permissions to update a specialite.'], 403);
         }
@@ -102,8 +106,12 @@ class SpecialiteController extends Controller
             return response()->json(['error' => 'Specialite not found'], 404);
         }
 
-        // Check if the user is authenticated and has the 'admin' role
-        $user = JWTAuth::parseToken()->authenticate();
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
         if (!$user || $user->role !== 'admin') {
             return response()->json(['error' => 'You do not have the necessary permissions to delete a specialite.'], 403);
         }

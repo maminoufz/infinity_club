@@ -1,15 +1,19 @@
 #!/bin/sh
 
-cat > /var/www/html/.env << EOF
+echo "Creating .env file..."
+
+cat > /var/www/html/.env <<EOF
 APP_NAME=Laravel
 APP_ENV=${APP_ENV:-production}
 APP_KEY=${APP_KEY}
 APP_DEBUG=${APP_DEBUG:-false}
-APP_URL=${APP_URL:-http://localhost}
+APP_URL=${APP_URL}
+
+LOG_CHANNEL=stack
 
 DB_CONNECTION=mysql
 DB_HOST=${DB_HOST}
-DB_PORT=${DB_PORT:-3306}
+DB_PORT=${DB_PORT}
 DB_DATABASE=${DB_DATABASE}
 DB_USERNAME=${DB_USERNAME}
 DB_PASSWORD=${DB_PASSWORD}
@@ -21,10 +25,15 @@ SESSION_DRIVER=file
 QUEUE_CONNECTION=sync
 EOF
 
-echo "=== .env written ==="
-cat /var/www/html/.env
+echo "=== .env created ==="
 
 php artisan config:clear
-php artisan route:cache
-php artisan migrate --force
-php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+php artisan cache:clear
+
+echo "Running migrations..."
+
+php artisan migrate --force || true
+
+echo "Starting Laravel..."
+
+php artisan serve --host=0.0.0.0 --port=${PORT}
