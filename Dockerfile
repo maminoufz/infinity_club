@@ -60,9 +60,10 @@ RUN mkdir -p \
     && chmod -R 755 storage bootstrap
 
 RUN php artisan package:discover --ansi
+RUN php artisan config:clear || true
 
 USER www-data
 
 EXPOSE 10000
 
-CMD sh -c "php artisan config:cache && php artisan route:cache && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"
+CMD sh -c "php artisan config:clear && php artisan route:cache && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"
