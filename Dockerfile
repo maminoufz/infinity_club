@@ -66,4 +66,26 @@ USER www-data
 
 EXPOSE 10000
 
-CMD sh -c "php artisan config:clear && php artisan route:cache && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"
+CMD sh -c "\
+    cat > /var/www/html/.env << EOF\n\
+APP_NAME=Laravel\n\
+APP_ENV=production\n\
+APP_KEY=${APP_KEY}\n\
+APP_DEBUG=false\n\
+APP_URL=${APP_URL}\n\
+\n\
+DB_CONNECTION=mysql\n\
+DB_HOST=${DB_HOST}\n\
+DB_PORT=${DB_PORT}\n\
+DB_DATABASE=${DB_DATABASE}\n\
+DB_USERNAME=${DB_USERNAME}\n\
+DB_PASSWORD=${DB_PASSWORD}\n\
+\n\
+CACHE_DRIVER=file\n\
+SESSION_DRIVER=file\n\
+QUEUE_CONNECTION=sync\n\
+EOF\n\
+    php artisan config:clear && \
+    php artisan route:cache && \
+    php artisan migrate --force && \
+    php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"
