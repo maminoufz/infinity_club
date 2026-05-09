@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Validator;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Cloudinary\Cloudinary as CloudinarySDK;
 
 class EventController extends Controller
 {
@@ -67,17 +68,26 @@ class EventController extends Controller
         // Handle image upload via Cloudinary
         if ($request->hasFile('image')) {
             try {
-                // Upload to Cloudinary (uses CLOUDINARY_URL from .env automatically)
-                $uploadedFile = Cloudinary::upload(
+                // Initialize Cloudinary from CLOUDINARY_URL env variable
+                $cloudinaryUrl = env('CLOUDINARY_URL');
+                if (!$cloudinaryUrl) {
+                    throw new \Exception('CLOUDINARY_URL environment variable is not set');
+                }
+
+                // Create Cloudinary instance from URL
+                $cloudinaryInstance = new CloudinarySDK($cloudinaryUrl);
+                
+                // Upload to Cloudinary
+                $uploadedFile = $cloudinaryInstance->uploadApi()->upload(
                     $request->file('image')->getRealPath(),
                     [
-                        'folder' => 'events',          // organise uploads in a folder
+                        'folder' => 'events',
                         'resource_type' => 'image',
                     ]
                 );
 
                 // Secure HTTPS URL returned by Cloudinary
-                $imageUrl = $uploadedFile->getSecurePath();
+                $imageUrl = $uploadedFile['secure_url'];
 
             } catch (\Exception $e) {
                 // Clean up the event if the upload fails so we don't leave orphaned records
@@ -150,15 +160,25 @@ class EventController extends Controller
             }
 
             try {
-                $uploadedFile = Cloudinary::upload(
+                // Initialize Cloudinary from CLOUDINARY_URL env variable
+                $cloudinaryUrl = env('CLOUDINARY_URL');
+                if (!$cloudinaryUrl) {
+                    throw new \Exception('CLOUDINARY_URL environment variable is not set');
+                }
+
+                // Create Cloudinary instance from URL
+                $cloudinaryInstance = new CloudinarySDK($cloudinaryUrl);
+                
+                // Upload to Cloudinary
+                $uploadedFile = $cloudinaryInstance->uploadApi()->upload(
                     $request->file('image')->getRealPath(),
                     [
-                        'folder'        => 'events',
+                        'folder' => 'events',
                         'resource_type' => 'image',
                     ]
                 );
 
-                $imageUrl = $uploadedFile->getSecurePath();
+                $imageUrl = $uploadedFile['secure_url'];
 
             } catch (\Exception $e) {
                 return response()->json([

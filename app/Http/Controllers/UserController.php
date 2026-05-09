@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -14,7 +15,7 @@ class UserController extends Controller
     /**
      * Get all users if the authenticated user is an admin.
      */
-    public function getAllUsers()
+    public function getAllUsers(): JsonResponse
     {
         // Return all users if admin
         $users = User::all();
@@ -24,7 +25,7 @@ class UserController extends Controller
     /**
      * Update a user's information if the authenticated user is an admin.
      */
-    public function updateUser(Request $request, $id)
+    public function updateUser(Request $request, int $id): JsonResponse
     {
         // Authenticate the user
         $authUser = JWTAuth::parseToken()->authenticate();
@@ -63,7 +64,7 @@ class UserController extends Controller
     /**
      * Delete a user if the authenticated user is an admin.
      */
-    public function deleteUser($id)
+    public function deleteUser(int $id): JsonResponse
     {
         // Check if the user has an admin role
         $user = JWTAuth::parseToken()->authenticate();
