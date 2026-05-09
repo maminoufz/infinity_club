@@ -4,10 +4,14 @@
     </x-slot>
 
     <x-slot name="description">
-        {{ __('Update your account\'s profile information and email address.') }}
+        {{ __('Update your account\'s profile information, contact details, and specialization.') }}
     </x-slot>
 
     <x-slot name="form">
+        @php
+            $specialites = \App\Models\Specialite::orderBy('nom_sp')->get();
+        @endphp
+
         <!-- Profile Photo -->
         @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
             <div x-data="{photoName: null, photoPreview: null}" class="col-span-6 sm:col-span-4">
@@ -80,6 +84,32 @@
                     </p>
                 @endif
             @endif
+        </div>
+
+        <!-- Phone -->
+        <div class="col-span-6 sm:col-span-4">
+            <x-label for="phone" value="{{ __('Phone') }}" />
+            <x-input id="phone" type="text" class="mt-1 block w-full" wire:model="state.phone" autocomplete="tel" />
+            <x-input-error for="phone" class="mt-2" />
+        </div>
+
+        <!-- Specialization -->
+        <div class="col-span-6 sm:col-span-4">
+            <x-label for="id_sp" value="{{ __('Specialization') }}" />
+            <select id="id_sp" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" wire:model="state.id_sp">
+                <option value="">{{ __('Select a specialization') }}</option>
+                @foreach ($specialites as $specialite)
+                    <option value="{{ $specialite->id }}">{{ $specialite->nom_sp }}</option>
+                @endforeach
+            </select>
+            <x-input-error for="id_sp" class="mt-2" />
+        </div>
+
+        <!-- Bio -->
+        <div class="col-span-6">
+            <x-label for="bio" value="{{ __('Bio') }}" />
+            <textarea id="bio" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" rows="4" wire:model="state.bio"></textarea>
+            <x-input-error for="bio" class="mt-2" />
         </div>
     </x-slot>
 

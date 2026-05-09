@@ -7,7 +7,7 @@ use App\Models\Image;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;  // For external file storage
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class EventController extends Controller
 {
@@ -45,11 +45,11 @@ class EventController extends Controller
 
         // Validate the request
         $validator = Validator::make($request->all(), [
-            'type' => 'required|string|max:255',
-            'date' => 'required|date',
+            'type'        => 'required|string|max:255',
+            'date'        => 'required|date',
             'description' => 'required|string|max:255',
-            'id_dep' => 'required|exists:departments,id', // Ensure department exists
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'id_dep'      => 'required|exists:departments,id',
+            'image'       => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -58,24 +58,47 @@ class EventController extends Controller
 
         // Create the event
         $event = Event::create([
-            'type' => $request->type,
-            'date' => $request->date,
+            'type'        => $request->type,
+            'date'        => $request->date,
             'description' => $request->description,
-            'id_dep' => $request->id_dep,
+            'id_dep'      => $request->id_dep,
         ]);
 
-        // Handle image upload if present
+        // Handle image upload via Cloudinary
         if ($request->hasFile('image')) {
-            // Use external storage like S3 or Aliyun OSS
-            $imagePath = $request->file('image')->store('images', 'public'); // Store image in external storage
-            // Save the image path in the Image table
-            $image = Image::create([
-                'image_path' => $imagePath,  // The stored file path (URL or path in external storage)
-                'id_event' => $event->id,    // Foreign key to the event
+            try {
+                // Upload to Cloudinary (uses CLOUDINARY_URL from .env automatically)
+                $uploadedFile = Cloudinary::upload(
+                    $request->file('image')->getRealPath(),
+                    [
+                        'folder' => 'events',          // organise uploads in a folder
+                        'resource_type' => 'image',
+                    ]
+                );
+
+                // Secure HTTPS URL returned by Cloudinary
+                $imageUrl = $uploadedFile->getSecurePath();
+
+            } catch (\Exception $e) {
+                // Clean up the event if the upload fails so we don't leave orphaned records
+                $event->delete();
+
+                return response()->json([
+                    'message' => 'Image upload failed: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            // Save the Cloudinary URL in the Image table
+            Image::create([
+                'image_path' => $imageUrl,
+                'id_event'   => $event->id,
             ]);
         }
 
-        return response()->json(['message' => 'Event created successfully', 'event' => $event]);
+        return response()->json([
+            'message' => 'Event created successfully',
+            'event'   => $event,
+        ]);
     }
 
     /**
@@ -103,20 +126,57 @@ class EventController extends Controller
 
         // Validate the request
         $validator = Validator::make($request->all(), [
-            'type' => 'sometimes|string|max:255',
-            'date' => 'sometimes|date',
+            'type'        => 'sometimes|string|max:255',
+            'date'        => 'sometimes|date',
             'description' => 'sometimes|string|max:255',
-            'id_dep' => 'sometimes|exists:departments,id', // Ensure department exists
+            'id_dep'      => 'sometimes|exists:departments,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json($validator->errors(), 400);
         }
 
-        // Update the event
-        $event->update($request->all());
+        // Update the event fields
+        $event->update($request->only(['type', 'date', 'description', 'id_dep']));
 
-        return response()->json(['message' => 'Event updated successfully', 'event' => $event]);
+        // Optionally replace the image if a new one is provided
+        if ($request->hasFile('image')) {
+            $validator2 = Validator::make($request->all(), [
+                'image' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+
+            if ($validator2->fails()) {
+                return response()->json($validator2->errors(), 400);
+            }
+
+            try {
+                $uploadedFile = Cloudinary::upload(
+                    $request->file('image')->getRealPath(),
+                    [
+                        'folder'        => 'events',
+                        'resource_type' => 'image',
+                    ]
+                );
+
+                $imageUrl = $uploadedFile->getSecurePath();
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Image upload failed: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            // Update or create the related image record
+            Image::updateOrCreate(
+                ['id_event' => $event->id],
+                ['image_path' => $imageUrl]
+            );
+        }
+
+        return response()->json([
+            'message' => 'Event updated successfully',
+            'event'   => $event,
+        ]);
     }
 
     /**
@@ -138,11 +198,10 @@ class EventController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Find and delete the event
+        // Find and delete the event (related images cascade if configured in migration)
         $event = Event::findOrFail($id);
         $event->delete();
 
         return response()->json(['message' => 'Event deleted successfully']);
     }
-
 }
