@@ -12,7 +12,6 @@
         "laravel/jetstream": "^5.3",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
-        "league/flysystem-ftp": "^3.31",
         "livewire/livewire": "^3.0",
         "tymon/jwt-auth": "^2.1"
     },
